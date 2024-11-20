@@ -1,3 +1,4 @@
+import streamlit as st
 from groq import Groq
 import os
 from dotenv import load_dotenv
@@ -5,7 +6,7 @@ import math as m
 import pandas as pd
 
 load_dotenv()
-api_key = os.getenv("GROQ_API_KEY")
+api_key = st.secrets["api"]["GROQ_API_KEY"]
 client = Groq(api_key=api_key)
 
 def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
