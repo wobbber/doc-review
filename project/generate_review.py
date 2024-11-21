@@ -32,12 +32,13 @@ def review_document(content: str, checks: list) -> pd.DataFrame:
         for check in checks:
             prompt = f"Review this chunk of the document against the following check: {check}\n\nChunk {i + 1}:\n{chunk}"
             try:
+                # Updated to the latest OpenAI interface
                 response = openai.ChatCompletion.create(
-                    model="gpt-4",  # Use "gpt-3.5-turbo" if GPT-4 is not available
+                    model="gpt-4",  # Change to "gpt-3.5-turbo" if needed
                     messages=[{"role": "user", "content": prompt}]
                 )
 
-                ai_response = response.choices[0].message["content"]
+                ai_response = response["choices"][0]["message"]["content"]
                 results.append({
                     "Check": check,
                     "Chunk": i + 1,
@@ -54,3 +55,24 @@ def review_document(content: str, checks: list) -> pd.DataFrame:
                 })
     
     return pd.DataFrame(results)
+
+# Streamlit UI for uploading and reviewing documents
+st.title("Document Review with GPT-4")
+st.write("Upload a document and provide checks for review.")
+
+# File uploader
+uploaded_file = st.file_uploader("Upload your document (text file only)", type="txt")
+
+# Input for checks
+checks_input = st.text_area("Enter checks (one per line)")
+
+if uploaded_file and checks_input:
+    # Process the uploaded file and checks
+    document_content = uploaded_file.read().decode("utf-8")
+    checks = checks_input.splitlines()
+
+    st.write("Processing the document...")
+    results = review_document(document_content, checks)
+
+    st.write("Review Results:")
+    st.dataframe(results)
