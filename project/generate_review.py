@@ -1,6 +1,5 @@
 import streamlit as st
 import openai
-import os
 import pandas as pd
 
 # Load API key from Streamlit secrets
@@ -24,7 +23,7 @@ def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
     
     return chunks
 
-def review_document(content: str, checks: list) -> pd.DataFrame:
+async def review_document(content: str, checks: list) -> pd.DataFrame:
     results = []
     chunks = split_into_chunks(content, max_tokens=3000)
 
@@ -32,9 +31,9 @@ def review_document(content: str, checks: list) -> pd.DataFrame:
         for check in checks:
             prompt = f"Review this chunk of the document against the following check: {check}\n\nChunk {i + 1}:\n{chunk}"
             try:
-                # Updated to the latest OpenAI interface
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",  # Change to "gpt-3.5-turbo" if needed
+                # Use the new `acreate` method
+                response = await openai.ChatCompletion.acreate(
+                    model="gpt-4",  # Use "gpt-4" or "gpt-3.5-turbo" depending on your access
                     messages=[{"role": "user", "content": prompt}]
                 )
 
@@ -72,7 +71,7 @@ if uploaded_file and checks_input:
     checks = checks_input.splitlines()
 
     st.write("Processing the document...")
-    results = review_document(document_content, checks)
+    results = st.experimental_singleton(review_document(document_content, checks))
 
     st.write("Review Results:")
     st.dataframe(results)
