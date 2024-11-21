@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+import os
 import pandas as pd
 
 # Load API key from Streamlit secrets
@@ -31,13 +32,12 @@ def review_document(content: str, checks: list) -> pd.DataFrame:
         for check in checks:
             prompt = f"Review this chunk of the document against the following check: {check}\n\nChunk {i + 1}:\n{chunk}"
             try:
-                # Specify the model: 'gpt-4o' or 'gpt-4o-mini'
                 response = openai.ChatCompletion.create(
-                    model="gpt-4o",  # Change to 'gpt-4o-mini' if desired
+                    model="gpt-4",  # Use "gpt-3.5-turbo" if GPT-4 is not available
                     messages=[{"role": "user", "content": prompt}]
                 )
 
-                ai_response = response["choices"][0]["message"]["content"]
+                ai_response = response.choices[0].message["content"]
                 results.append({
                     "Check": check,
                     "Chunk": i + 1,
