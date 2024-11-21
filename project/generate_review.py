@@ -1,13 +1,11 @@
 import streamlit as st
-from groq import Groq
+import openai
 import os
-from dotenv import load_dotenv
-import math as m
 import pandas as pd
 
-load_dotenv()
-api_key = st.secrets["api"]["GROQ_API_KEY"]
-client = Groq(api_key=api_key)
+# Load API key from Streamlit secrets
+api_key = st.secrets["api"]["OPENAI_API_KEY"]
+openai.api_key = api_key
 
 def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
     lines = text.splitlines()
@@ -18,7 +16,6 @@ def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
         if sum(len(l) for l in current_chunk) + len(line) > max_tokens:
             chunks.append("\n".join(current_chunk))
             current_chunk = [line]
-        
         else:
             current_chunk.append(line)
     
@@ -35,12 +32,12 @@ def review_document(content: str, checks: list) -> pd.DataFrame:
         for check in checks:
             prompt = f"Review this chunk of the document against the following check: {check}\n\nChunk {i + 1}:\n{chunk}"
             try:
-                response = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="llama3-8b-8192"
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",  # Use "gpt-3.5-turbo" if GPT-4 is not available
+                    messages=[{"role": "user", "content": prompt}]
                 )
 
-                ai_response = response.choices[0].message.content
+                ai_response = response.choices[0].message["content"]
                 results.append({
                     "Check": check,
                     "Chunk": i + 1,
