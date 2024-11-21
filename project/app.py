@@ -1,35 +1,56 @@
 import streamlit as st
-from documents import load_documents, load_checks
-from generate_review import review_document
+import openai
+import pandas as pd
 
-st.spinner("Loading pre-defined checks from input PDFs...")
-checks = load_checks()
-st.success("Checks loaded successfully!")
+# Load API key from Streamlit secrets
+api_key = st.secrets["api"]["OPENAI_API_KEY"]
+openai.api_key = api_key
 
-st.title("AI-Powered CTD Document Review")
-st.write("Upload your CTD Document, and let AI review it using the pre-loaded checks.")
-uploaded_files = st.file_uploader("Upload Documents (PDF only)", type=["pdf"], accept_multiple_files=True)
-if uploaded_files:
-    st.success("Document successfully uploaded!")
+def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
+    lines = text.splitlines()
+    chunks = []
+    current_chunk = []
 
-if st.button("Review Document"):
-    if uploaded_files:
-        st.spinner("Processing your document...")
-        combined_content = ""
-        for uploaded_file in uploaded_files:
-            doc_content = load_documents(uploaded_file) + "\n\n"
-
-        review_results = review_document(content=doc_content, checks=checks)
-
-        st.success("Document review completed!")
-        st.dataframe(review_results)
-
-        st.download_button(
-            label="Download Review Report",
-            data=review_results.to_csv(index=False),
-            file_name="document_review_report.csv",
-            mime="text/csv"
-        )
+    for line in lines:
+        if sum(len(l) for l in current_chunk) + len(line) > max_tokens:
+            chunks.append("\n".join(current_chunk))
+            current_chunk = [line]
+        else:
+            current_chunk.append(line)
     
-    else:
-        st.error("Please upload a document to proceed.")
+    if current_chunk:
+        chunks.append("\n".join(current_chunk))
+    
+    return chunks
+
+def review_document(content: str, checks: list) -> pd.DataFrame:
+    results = []
+    chunks = split_into_chunks(content, max_tokens=3000)
+
+    for i, chunk in enumerate(chunks):
+        for check in checks:
+            prompt = f"Review this chunk of the document against the following check: {check}\n\nChunk {i + 1}:\n{chunk}"
+            try:
+                # Specify the model: 'gpt-4o' or 'gpt-4o-mini'
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o",  # Change to 'gpt-4o-mini' if desired
+                    messages=[{"role": "user", "content": prompt}]
+                )
+
+                ai_response = response["choices"][0]["message"]["content"]
+                results.append({
+                    "Check": check,
+                    "Chunk": i + 1,
+                    "Feedback": ai_response,
+                    "Action Required": "Yes" if "missing" in ai_response.lower() or "incorrect" in ai_response.lower() else "No",
+                })
+            
+            except Exception as e:
+                results.append({
+                    "Check": check,
+                    "Chunk": i + 1,
+                    "Feedback": f"Error: {str(e)}",
+                    "Action Required": "Unknown",
+                })
+    
+    return pd.DataFrame(results)
