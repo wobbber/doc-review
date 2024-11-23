@@ -1,13 +1,18 @@
-import streamlit as st
+# import streamlit as st
 from groq import Groq
 import os
 from dotenv import load_dotenv
-import math as m
+
+# import math as m
 import pandas as pd
+import openai
+import google.generativeai as genai
 
 load_dotenv()
-api_key = st.secrets["api"]["GROQ_API_KEY"]
-client = Groq(api_key=api_key)
+# api_key = st.secrets["api"]["GROQ_API_KEY"]
+# api_key = os.environ.get('OPENAI_API')
+# client = Groq(api_key=api_key)
+
 
 def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
     lines = text.splitlines()
@@ -18,42 +23,84 @@ def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
         if sum(len(l) for l in current_chunk) + len(line) > max_tokens:
             chunks.append("\n".join(current_chunk))
             current_chunk = [line]
-        
+
         else:
             current_chunk.append(line)
-    
+
     if current_chunk:
         chunks.append("\n".join(current_chunk))
-    
+
     return chunks
 
-def review_document(content: str, checks: list) -> pd.DataFrame:
+
+def review_document(
+    content: str,
+    checks: list,
+    prompt_base: str,
+    api_key: str,
+    llm_agent: str,
+    temp: float,
+    max_tokens: int,
+) -> pd.DataFrame:
     results = []
     chunks = split_into_chunks(content, max_tokens=3000)
 
+    if llm_agent == "OpenAI":
+        openai.api_key = api_key
+    elif llm_agent == "Gemini":
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        generationConfig = {"temperature": temp}
+        # generationConfig = {"temperature":temp,"maxOutputTokens":max_tokens}
+
+    else:
+        raise Exception("Anubhav Have No Access to any other LLM_Agent")
+
     for i, chunk in enumerate(chunks):
         for check in checks:
-            prompt = f"Review this chunk of the document against the following check: {check}\n\nChunk {i + 1}:\n{chunk}"
+            prompt = f"{prompt_base} {check}\n\nChunk {i + 1}:\n{chunk}"
             try:
-                response = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="llama3-8b-8192"
+                if llm_agent == "OpenAI":
+                    response = openai.ChatCompletion.create(
+                        model="gpt-4-turbo",
+                        messages=[
+                            {"role": "system", "content": "Need to perform Checklist"},
+                            {"role": "user", "content": prompt},
+                        ],
+                        max_tokens=max_tokens,
+                        temperature=temp,
+                    )
+                    ai_response = response["choices"][0]["message"]["content"]
+
+                elif llm_agent == "Gemini":
+                    response = model.generate_content(
+                        prompt, generation_config=generationConfig
+                    )
+                    ai_response = response.text
+
+                print(ai_response)
+                results.append(
+                    {
+                        "Check": check,
+                        "Chunk": i + 1,
+                        "Feedback": ai_response,
+                        "Action Required": (
+                            "Yes"
+                            if "missing" in ai_response.lower()
+                            or "incorrect" in ai_response.lower()
+                            else "No"
+                        ),
+                    }
                 )
 
-                ai_response = response.choices[0].message.content
-                results.append({
-                    "Check": check,
-                    "Chunk": i + 1,
-                    "Feedback": ai_response,
-                    "Action Required": "Yes" if "missing" in ai_response.lower() or "incorrect" in ai_response.lower() else "No",
-                })
-            
             except Exception as e:
-                results.append({
-                    "Check": check,
-                    "Chunk": i + 1,
-                    "Feedback": f"Error: {str(e)}",
-                    "Action Required": "Unknown",
-                })
-    
+                results.append(
+                    {
+                        "Check": check,
+                        "Chunk": i + 1,
+                        "Feedback": f"Error: {str(e)}",
+                        "Action Required": "Unknown",
+                    }
+                )
+
     return pd.DataFrame(results)

@@ -1,12 +1,14 @@
 import fitz
 
+
 def extract_text_from_pdf(file_path) -> list:
     with fitz.open(file_path) as pdf_document:
         content = []
         for page in pdf_document:
             content.append(page.get_text())
-    
+
     return "\n".join(content).splitlines()
+
 
 def load_checks() -> list:
     checklist_path = "checklist.pdf"
@@ -19,10 +21,11 @@ def load_checks() -> list:
 
     return [line.strip() for line in combined_checks if line.strip()]
 
+
 def load_documents(file) -> str:
     with fitz.open(stream=file.read(), filetype="pdf") as pdf_document:
         content = []
         for page in pdf_document:
             content.append(page.get_text())
-        
+
         return "\n".join(content)
