@@ -50,7 +50,7 @@ elif llm_agent == "Gemini":
     )
 
 temp = st.slider("Temperature For Model: ", min_value=0.1, max_value=1.5, step=0.1)
-max_tokens = st.slider("Max Tokens For Feedbacks: ", min_value=100, max_value=10000, step=100)
+max_tokens = st.slider("Max Tokens For Feedbacks: ", min_value=100, max_value=8000, step=100)
 
 st.title("AI-Powered CTD Document Review")
 st.write("Upload your CTD Document, and let AI review it using the pre-loaded checks.")
