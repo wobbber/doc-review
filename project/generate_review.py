@@ -43,7 +43,7 @@ def review_document(
 ) -> pd.DataFrame:
     start_time = time.time()
     results = []
-    chunks = split_into_chunks(content, max_tokens=3000)
+    chunks = split_into_chunks(content, max_tokens=30000)
 
     if llm_agent == "OpenAI":
         openai.api_key = api_key
