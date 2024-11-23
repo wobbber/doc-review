@@ -12,7 +12,7 @@ load_dotenv()
 # client = Groq(api_key=api_key)
 
 
-def split_into_chunks(text: str, max_tokens: int = 3000) -> list:
+def split_into_chunks(text: str, max_tokens: int = 30000) -> list:
     lines = text.splitlines()
     chunks = []
     current_chunk = []
@@ -55,6 +55,8 @@ def review_document(
 
     else:
         raise Exception("Anubhav Have No Access to any other LLM_Agent")
+
+    checks = ["\n".join(checks)]
 
     for i, chunk in enumerate(chunks):
         for check in checks:
