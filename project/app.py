@@ -32,22 +32,22 @@ llm_agent = st.selectbox(
 
 api_key = st.text_input("Enter API Key (Leave Blank For Default)")
 
-if api_key == "":
-    if llm_agent == "OpenAI":
-        # api_key = os.environ.get("OPENAI_API")
-        api_key = st.secrets["api"]["OPENAI_API"]
-        model_details = st.selectbox(
-            "Your LLM Model: ",
-            ("gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"),
-        )
+# if api_key == "":
+if llm_agent == "OpenAI":
+    # api_key = os.environ.get("OPENAI_API")
+    # api_key = st.secrets["api"]["OPENAI_API"]
+    model_details = st.selectbox(
+        "Your LLM Model: ",
+        ("gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"),
+    )
 
-    elif llm_agent == "Gemini":
-        # api_key = os.environ.get("GEMINI_API")
-        api_key = st.secrets["api"]["GEMINI_API"]
-        model_details = st.selectbox(
-            "Your LLM Model: ",
-            ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"),
-        )
+elif llm_agent == "Gemini":
+    # api_key = os.environ.get("GEMINI_API")
+    # api_key = st.secrets["api"]["GEMINI_API"]
+    model_details = st.selectbox(
+        "Your LLM Model: ",
+        ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"),
+    )
 
 temp = st.slider("Temperature For Model", min_value=0.1, max_value=1.5, step=0.1)
 max_tokens = st.slider("Max Tokens", min_value=100, max_value=500, step=10)
