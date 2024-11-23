@@ -38,7 +38,7 @@ if llm_agent == "OpenAI":
     # api_key = st.secrets["api"]["OPENAI_API"]
     model_details = st.selectbox(
         "Your LLM Model: ",
-        ("gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"),
+        ("gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "gpt-4o-mini"),
     )
 
 elif llm_agent == "Gemini":
