@@ -1,8 +1,6 @@
-# import streamlit as st
-from groq import Groq
-import os
+import streamlit as st
 from dotenv import load_dotenv
-
+import time
 # import math as m
 import pandas as pd
 import openai
@@ -41,7 +39,9 @@ def review_document(
     llm_agent: str,
     temp: float,
     max_tokens: int,
+    model_details: str
 ) -> pd.DataFrame:
+    start_time = time.time()
     results = []
     chunks = split_into_chunks(content, max_tokens=3000)
 
@@ -49,7 +49,7 @@ def review_document(
         openai.api_key = api_key
     elif llm_agent == "Gemini":
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(model_details)
         generationConfig = {"temperature": temp}
         # generationConfig = {"temperature":temp,"maxOutputTokens":max_tokens}
 
@@ -62,7 +62,7 @@ def review_document(
             try:
                 if llm_agent == "OpenAI":
                     response = openai.ChatCompletion.create(
-                        model="gpt-4-turbo",
+                        model=model_details,
                         messages=[
                             {"role": "system", "content": "Need to perform Checklist"},
                             {"role": "user", "content": prompt},
@@ -78,7 +78,6 @@ def review_document(
                     )
                     ai_response = response.text
 
-                print(ai_response)
                 results.append(
                     {
                         "Check": check,
@@ -102,5 +101,5 @@ def review_document(
                         "Action Required": "Unknown",
                     }
                 )
-
+    st.write(f'Time Taken = {round(time.time() - start_time,2)} secs')
     return pd.DataFrame(results)
