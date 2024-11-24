@@ -1,6 +1,4 @@
-# AI-Powered CTD Document Review
-
-This project enables automated review of CTD (Common Technical Document) PDFs using AI. It checks uploaded documents against predefined criteria and generates actionable feedback.
+# Docai
 
 ---
 
